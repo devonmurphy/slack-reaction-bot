@@ -2,14 +2,28 @@ import os
 import time
 import re
 import random
-from slackclient import SlackClient
-import urllib, json
+import slack
+import urllib.request
+import json
 import itertools
 import string
 
-# instantiate Slack client with token loaded from enviormental variables
-# export SLACK_BOT_TOKEN = 'slackbottoken';
-slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+from slack import RTMClient
+
+@RTMClient.run_on(event="message")
+def say_hello(**payload):
+    data = payload['data']
+    web_client = payload['web_client']
+    print('message received')
+    if(('text' in data) == False):
+        return
+
+    responses = create_responses(data['text'])
+    channel_id = data['channel']
+    ts = data['ts']
+    add_reactions(responses, channel_id, ts, web_client)
+    time.sleep(RTM_READ_DELAY)
+
 # starterbot's user ID in Slack: value is assigned after the bot starts up
 bot_id = None
 
@@ -18,9 +32,12 @@ RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
 MENTION_REGEX = "^<@(|[WU].+)>(.*)"
 
 # Load emoji names
-url = "https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json"
-urlOpen = urllib.urlopen(url)
-emojiJson = json.loads(urlOpen.read())
+gitUrl = "https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json"
+with urllib.request.urlopen(gitUrl) as url:
+    data = url.read()
+    encoding = url.info().get_content_charset('utf-8')
+
+emojiJson = json.loads(data.decode(encoding))
 
 # replace "_" with " " since that is what people will type
 EMOJIS = []
@@ -29,7 +46,6 @@ for emoji in emojiJson:
     name = name.replace('_',' ')
     if len(name) > 1:
         EMOJIS.append(name)
-
 
 # returns all sequences of n size ((s1,s2,..,sn),(s2,s3,..,sn)),...
 def nWise(iterable, n=2):
@@ -65,21 +81,21 @@ def create_responses(message):
     return responses
         
 # Sends the response back to the channel
-def add_reactions(responses, channel, timestamp):
+def add_reactions(responses, channel, timestamp, web_client):
     for response in responses:
         response = response.replace(' ','_')
-        print 'Reacted with: ' + response
-        slack_client.api_call("reactions.add", channel=channel, timestamp = timestamp, name = response)
+        print ('Reacted with: ' + response)
+
+        web_client.reactions_add(
+            channel=channel,
+            name=response,
+            timestamp=timestamp
+        )
 
 if __name__ == "__main__":
-    if slack_client.rtm_connect(with_team_state=False):
-        print("Reaction Bot connected and running!")
-        # Read bot's user ID by calling Web API method `auth.test`
-        bot_id = slack_client.api_call("auth.test")["user_id"]
-        while True:
-            responses, channel, timestamp = parse_message(slack_client.rtm_read())
-            if responses:
-                add_reactions(responses, channel, timestamp)
-            time.sleep(RTM_READ_DELAY)
-    else:
-        print("Connection failed. Exception traceback printed above.")
+    slack_token = os.environ["SLACK_BOT_TOKEN"]
+    slack_client = slack.RTMClient(
+        token=slack_token,
+        connect_method='rtm.start'
+    )
+    slack_client.start()
