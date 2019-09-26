@@ -2,7 +2,6 @@ import os
 import time
 import re
 import random
-import slack
 import urllib.request
 import json
 import itertools
@@ -11,7 +10,7 @@ import string
 from slack import RTMClient
 
 @RTMClient.run_on(event="message")
-def say_hello(**payload):
+def react_to_post(**payload):
     data = payload['data']
     web_client = payload['web_client']
     print('message received')
@@ -24,12 +23,8 @@ def say_hello(**payload):
     add_reactions(responses, channel_id, ts, web_client)
     time.sleep(RTM_READ_DELAY)
 
-# starterbot's user ID in Slack: value is assigned after the bot starts up
-bot_id = None
-
 # constants
 RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
-MENTION_REGEX = "^<@(|[WU].+)>(.*)"
 
 # Load emoji names
 gitUrl = "https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json"
@@ -42,10 +37,10 @@ emojiJson = json.loads(data.decode(encoding))
 # replace "_" with " " since that is what people will type
 EMOJIS = []
 for emoji in emojiJson:
-    name = emoji['short_name']
-    name = name.replace('_',' ')
-    if len(name) > 1:
-        EMOJIS.append(name)
+    for name in emoji['short_names']:
+        name = name.replace('_',' ')
+        if len(name) > 1:
+            EMOJIS.append(name)
 
 # returns all sequences of n size ((s1,s2,..,sn),(s2,s3,..,sn)),...
 def nWise(iterable, n=2):
@@ -94,7 +89,7 @@ def add_reactions(responses, channel, timestamp, web_client):
 
 if __name__ == "__main__":
     slack_token = os.environ["SLACK_BOT_TOKEN"]
-    slack_client = slack.RTMClient(
+    slack_client = RTMClient(
         token=slack_token,
         connect_method='rtm.start'
     )
