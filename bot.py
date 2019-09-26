@@ -12,22 +12,30 @@ from slack import RTMClient
 # constants and globals
 RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
 EMOJIS = []
-
-
+SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
+USER_ID = os.environ["SLACK_BOT_ID"]
 
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
     data = payload['data']
-    web_client = payload['web_client']
+    webClient = payload['web_client']
     print('message received')
     if(('text' in data) == False):
         return
 
     responses = create_responses(data['text'])
-    channel_id = data['channel']
+    channel = data['channel']
     ts = data['ts']
-    add_reactions(responses, channel_id, ts, web_client)
+    add_reactions(responses, channel, ts, webClient)
+    parse_mention(data['text'], channel, webClient)
     time.sleep(RTM_READ_DELAY)
+
+def parse_mention(text, channel, webClient):
+    if '@'+USER_ID in text:
+        print('mentioned')
+        webClient.chat_postMessage(
+            channel=channel,
+            text="I don't have any commands yet,")
 
 def load_emojis():
     global EMOJIS
@@ -46,7 +54,6 @@ def load_emojis():
             name = name.replace('_',' ')
             if len(name) > 1:
                 EMOJIS.append(name)
-
 
 
 # returns all sequences of n size ((s1,s2,..,sn),(s2,s3,..,sn)),...
@@ -83,12 +90,12 @@ def create_responses(message):
     return responses
         
 # Sends the response back to the channel
-def add_reactions(responses, channel, timestamp, web_client):
+def add_reactions(responses, channel, timestamp, webClient):
     for response in responses:
         response = response.replace(' ','_')
         print ('Reacted with: ' + response)
 
-        web_client.reactions_add(
+        webClient.reactions_add(
             channel=channel,
             name=response,
             timestamp=timestamp
@@ -96,9 +103,8 @@ def add_reactions(responses, channel, timestamp, web_client):
 
 if __name__ == "__main__":
     load_emojis()
-    slack_token = os.environ["SLACK_BOT_TOKEN"]
     slack_client = RTMClient(
-        token=slack_token,
+        token=SLACK_TOKEN,
         connect_method='rtm.start'
     )
     slack_client.start()
