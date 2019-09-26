@@ -9,6 +9,12 @@ import string
 
 from slack import RTMClient
 
+# constants and globals
+RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
+EMOJIS = []
+
+
+
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
     data = payload['data']
@@ -23,24 +29,25 @@ def react_to_post(**payload):
     add_reactions(responses, channel_id, ts, web_client)
     time.sleep(RTM_READ_DELAY)
 
-# constants
-RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
+def load_emojis():
+    global EMOJIS
 
-# Load emoji names
-gitUrl = "https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json"
-with urllib.request.urlopen(gitUrl) as url:
-    data = url.read()
-    encoding = url.info().get_content_charset('utf-8')
+    # Load emoji names
+    gitUrl = "https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json"
+    with urllib.request.urlopen(gitUrl) as url:
+        data = url.read()
+        encoding = url.info().get_content_charset('utf-8')
 
-emojiJson = json.loads(data.decode(encoding))
+    emojiJson = json.loads(data.decode(encoding))
 
-# replace "_" with " " since that is what people will type
-EMOJIS = []
-for emoji in emojiJson:
-    for name in emoji['short_names']:
-        name = name.replace('_',' ')
-        if len(name) > 1:
-            EMOJIS.append(name)
+    # replace "_" with " " since that is what people will type
+    for emoji in emojiJson:
+        for name in emoji['short_names']:
+            name = name.replace('_',' ')
+            if len(name) > 1:
+                EMOJIS.append(name)
+
+
 
 # returns all sequences of n size ((s1,s2,..,sn),(s2,s3,..,sn)),...
 def nWise(iterable, n=2):
@@ -88,6 +95,7 @@ def add_reactions(responses, channel, timestamp, web_client):
         )
 
 if __name__ == "__main__":
+    load_emojis()
     slack_token = os.environ["SLACK_BOT_TOKEN"]
     slack_client = RTMClient(
         token=slack_token,
