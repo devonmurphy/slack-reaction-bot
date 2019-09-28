@@ -14,6 +14,7 @@ RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
 EMOJIS = []
 SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
+MIN_EMOJI_LENGTH = 3
 
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
@@ -52,7 +53,7 @@ def load_emojis():
     for emoji in emojiJson:
         for name in emoji['short_names']:
             name = name.replace('_',' ')
-            if len(name) > 1:
+            if len(name) >= MIN_EMOJI_LENGTH:
                 EMOJIS.append(name)
 
 
