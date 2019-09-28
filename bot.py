@@ -16,6 +16,30 @@ SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
 MIN_EMOJI_LENGTH = 3
 
+# map custom words to emojis that might be custom in the slack workspace
+CUSTOM_EMOJIS = {
+    "monkey":"gix-monkey",
+    "gix":"gix-monkey",
+    "@gix":"gix-monkey",
+    "gaak":"hogaak",
+    "gaaked":"hogaak",
+    "gaakd":"hogaak",
+    "hoogaak":"hogaak",
+    "laser":"hogaak",
+    "stonks":"stonk-up",
+    "good":"stonk-up",
+    "stonkz":"stonk-up",
+    "bad":"stonk-down",
+    "ok":"stonk-flat",
+    "party":"party",
+    "think":"big-think",
+    "big":"big-think",
+    "thought":"big-think",
+    "money":"money-with-wings",
+    "goose":"goose",
+}
+
+
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
     data = payload['data']
@@ -88,6 +112,8 @@ def create_responses(message):
                 wordGroup = ' '.join(wordGroup)
                 if wordGroup in EMOJIS:
                     responses.append(wordGroup)
+                if wordGroup in CUSTOM_EMOJIS.keys():
+                    responses.append(CUSTOM_EMOJIS[wordGroup])
     return responses
         
 # Sends the response back to the channel
