@@ -17,7 +17,7 @@ SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
 MIN_EMOJI_LENGTH = 3
 FUZZY_MATCH = True
-MIN_FUZZY_MATCH_RATIO = .5
+MIN_FUZZY_MATCH_RATIO = 55
 
 # map custom words to emojis that might be custom in the slack workspace
 CUSTOM_EMOJIS = {
