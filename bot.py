@@ -74,7 +74,12 @@ def listReactions(words, channel, webClient):
 
 def blacklist(words, channel, webClient):
     if len(words) < 1:
-        text="The emojis that are blacklisted currently are:\n" + "\n".join(BLACKLIST)+"\n\n\n"
+        formatted = BLACKLIST.copy()
+        index = 0
+        for word in formatted:
+            formatted[index] = ":"+word+":"
+            index += 1
+        text="The emojis that are blacklisted currently are:\n" + "\n".join(formatted)+"\n\n\n"
         text+="If you would like to blacklist an emoji, the command format is:\nblacklist emoji-name"
         webClient.chat_postMessage(channel=channel,text=text) 
         return
