@@ -15,37 +15,94 @@ RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
 EMOJIS = []
 SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
-MIN_EMOJI_LENGTH = 3
-FUZZY_MATCH = True
+MIN_EMOJI_LENGTH = 2
 
-MIN_FUZZY_CUSTOM_MATCH_RATIO = 80
+FUZZY_MATCH = False
+MIN_FUZZY_CUSTOM_MATCH_RATIO = 60
 
-# map custom words to emojis that might be custom in the slack workspace
-CUSTOM_EMOJIS = {
-    "monkey":"gix-monkey",
-    "gix":"gix-monkey",
-    "@gix":"gix-monkey",
-    "gaak":"hogaak",
-    "gaaked":"hogaak",
-    "gaakd":"hogaak",
-    "hoogaak":"hogaak",
-    "laser":"hogaak",
-    "stonks":"stonk-up",
-    "good":"stonk-up",
-    "stonkz":"stonk-up",
-    "great":"stonk-up",
-    "bad":"stonk-down",
-    "fine":"stonk-flat",
-    "normal":"stonk-flat",
-    "flat":"stonk-flat",
-    "party":"party",
-    "think":"big-think",
-    "large":"big-think",
-    "thought":"big-think",
-    "money":"money-with-wings",
-    "goose":"goose",
+CUSTOM_EMOJIS = {}
+BLACKLIST = []
+
+def listCommands(words, channel, webClient):
+    webClient.chat_postMessage(channel=channel, text="my commands are:\n"+"\n".join(COMMANDS.keys()))
+
+def addReaction(words, channel, webClient):
+    if len(words) < 2:
+        webClient.chat_postMessage(channel=channel, text="Command Error! command format is:\nadd phrase emoji-name")
+        return
+
+    phrase = words[0]
+    reaction = words[1]
+    if phrase in CUSTOM_EMOJIS:
+        webClient.chat_postMessage(channel=channel, text="Command Error! This phrase already exists! Currently whenever " + phrase + " is said I will react with " + CUSTOM_EMOJIS[phrase])
+        return
+
+    CUSTOM_EMOJIS[phrase] = reaction
+
+    with open("custom_emojis.json", "w") as json_file:
+        newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
+        json_file.write(newEmojis)
+        webClient.chat_postMessage(channel=channel, text="Added reaction! Now whenever " + phrase + " is said I will react with " + reaction)
+
+def removeReaction(words, channel, webClient):
+    if len(words) < 1:
+        webClient.chat_postMessage(channel=channel, text="Command Error! command format is:\nremove phrase")
+        return
+
+    phrase = words[0]
+    if phrase not in CUSTOM_EMOJIS:
+        webClient.chat_postMessage(channel=channel, text="Command Error! This phrase doesn't exist!")
+        return
+
+    del CUSTOM_EMOJIS[phrase]
+
+    with open("custom_emojis.json", "w") as json_file:
+        newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
+        json_file.write(newEmojis)
+        webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to " + phrase)
+
+
+def blacklist(words, channel, webClient):
+    if len(words) < 1:
+        text="The emojis that are blacklisted currently are:\n" + "\n".join(BLACKLIST)+"\n\n\n"
+        text+="If you would like to blacklist an emoji, the command format is:\nblacklist emoji-name"
+        webClient.chat_postMessage(channel=channel,text=text) 
+        return
+
+    with open("blacklist.json", "w") as json_file:
+        reaction = words[0]
+        if reaction not in BLACKLIST:
+            BLACKLIST.append(reaction)
+            newBlacklist = json.dumps({ "blacklist": BLACKLIST }, indent=4)
+            json_file.write(newBlacklist)
+            webClient.chat_postMessage(channel=channel, text="Blacklisted reaction! Now I won't use " + reaction + " as a reaction")
+        else:
+            webClient.chat_postMessage(channel=channel, text=reaction + " is already blacklisted")
+
+def unblacklist(words, channel, webClient):
+    if len(words) < 1:
+        text="The emojis that are blacklisted currently are:\n" + "\n".join(BLACKLIST)+"\n\n\n"
+        text+="If you would like to unblacklist an emoji, the command format is:\nunblacklist emoji-name"
+        webClient.chat_postMessage(channel=channel,text=text) 
+        return
+
+    with open("blacklist.json", "w") as json_file:
+        reaction = words[0]
+        if reaction in BLACKLIST:
+            BLACKLIST.remove(reaction)
+            newBlacklist = json.dumps({ "blacklist": BLACKLIST }, indent=4)
+            json_file.write(newBlacklist)
+            webClient.chat_postMessage(channel=channel, text="Unblacklisted reaction! Now I will use " + reaction + " as a reaction")
+        else:
+            webClient.chat_postMessage(channel=channel, text=reaction + " is not blacklisted, feel free to use it")
+
+COMMANDS = {
+    "help": listCommands,
+    "blacklist": blacklist,
+    "unblacklist": unblacklist,
+    "add": addReaction,
+    "remove": removeReaction
 }
-
 
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
@@ -64,13 +121,34 @@ def react_to_post(**payload):
 
 def parse_mention(text, channel, webClient):
     if '@'+USER_ID in text:
-        print('mentioned')
-        webClient.chat_postMessage(
-            channel=channel,
-            text="I don't have any commands yet,")
+        commandFound = False
+        words = text.lower().split()
+        index = 0
+        for word in words:
+            if word in COMMANDS.keys():
+                COMMANDS[word](words[index + 1:], channel, webClient)
+                commandFound = True
+                break
+            index += 1
+
+        if commandFound == False:
+            webClient.chat_postMessage(channel=channel, text="I don't have that command yet.")
+
+def load_blacklist():
+    global BLACKLIST
+
+    # open blacklisted words
+    with open("blacklist.json") as json_file:
+        BLACKLIST = json.load(json_file)['blacklist']
+
 
 def load_emojis():
     global EMOJIS
+    global CUSTOM_EMOJIS
+
+    # map custom words to emojis that might be custom in the slack workspace
+    with open("custom_emojis.json") as json_file:
+        CUSTOM_EMOJIS = json.load(json_file)
 
     # Load emoji names
     gitUrl = "https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json"
@@ -99,8 +177,8 @@ def nWise(iterable, n=2):
 def parse_message(slack_events):
     for event in slack_events:
         if event["type"] == "message" and not "subtype" in event:
-                responses = create_responses(event["text"])
-                return responses, event["channel"], event["ts"]
+            responses = create_responses(event["text"])
+            return responses, event["channel"], event["ts"]
     return None, None, None
 
 # looks for phrases and words in a message that are also emoji words
@@ -139,7 +217,12 @@ def create_responses(message):
         
 # Sends the response back to the channel
 def add_reactions(responses, channel, timestamp, webClient):
+    global BLACKLIST
+
     for response in responses:
+        if response in BLACKLIST:
+            break
+
         response = response.replace(' ','_')
         print ('Reacted with: ' + response)
 
@@ -150,6 +233,7 @@ def add_reactions(responses, channel, timestamp, webClient):
         )
 
 if __name__ == "__main__":
+    load_blacklist()
     load_emojis()
     slack_client = RTMClient(
         token=SLACK_TOKEN,
