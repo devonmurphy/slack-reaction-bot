@@ -7,6 +7,7 @@ import json
 import itertools
 import string
 
+from fuzzywuzzy import process
 from slack import RTMClient
 
 # constants and globals
@@ -15,6 +16,8 @@ EMOJIS = []
 SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
 MIN_EMOJI_LENGTH = 3
+FUZZY_MATCH = True
+MIN_FUZZY_MATCH_RATIO = .5
 
 # map custom words to emojis that might be custom in the slack workspace
 CUSTOM_EMOJIS = {
@@ -114,6 +117,16 @@ def create_responses(message):
                     responses.append(wordGroup)
                 if wordGroup in CUSTOM_EMOJIS.keys():
                     responses.append(CUSTOM_EMOJIS[wordGroup])
+
+
+    if FUZZY_MATCH and len(responses) == 0:
+        result = process.extractOne(random.choice(words), CUSTOM_EMOJIS.keys())
+        print("FUZZY CUSTOM MATCH: " + result[0])
+        print("FUZZY CUSTOM RATIO: " + str(result[1]))
+        if result[1] > MIN_FUZZY_MATCH_RATIO:
+            response = CUSTOM_EMOJIS[result[0]]
+            responses.append(response)
+
     return responses
         
 # Sends the response back to the channel
