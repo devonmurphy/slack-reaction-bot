@@ -1,7 +1,6 @@
 {
     "monkey": "gix-monkey",
     "gix": "gix-monkey",
-    "@gix": "gix-monkey",
     "gaak": "hogaak",
     "gaaked": "hogaak",
     "gaakd": "hogaak",
@@ -20,5 +19,7 @@
     "large": "big-think",
     "thought": "big-think",
     "money": "money-with-wings",
-    "goose": "goose"
+    "goose": "goose",
+    "kungfurabbi": "party",
+    "<@U5ZACNY57>": "gix-monkey"
 }

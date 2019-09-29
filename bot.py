@@ -112,17 +112,21 @@ def react_to_post(**payload):
     if(('text' in data) == False):
         return
 
+    print(data['text'])
+
     responses = create_responses(data['text'])
     channel = data['channel']
     ts = data['ts']
-    add_reactions(responses, channel, ts, webClient)
     parse_mention(data['text'], channel, webClient)
     time.sleep(RTM_READ_DELAY)
+    add_reactions(responses, channel, ts, webClient)
 
 def parse_mention(text, channel, webClient):
-    if '@'+USER_ID in text:
+    global USER_ID
+    if '@' + USER_ID in text:
+        print("mentioned")
         commandFound = False
-        words = text.lower().split()
+        words = text.split()
         index = 0
         for word in words:
             if word in COMMANDS.keys():
@@ -183,10 +187,20 @@ def parse_message(slack_events):
 
 # looks for phrases and words in a message that are also emoji words
 def create_responses(message):
+    global EMOJIS
+    global CUSTOM_EMOJIS
+    responses = []
+    # first check for words that are not formatted yet
+    unformatted = message.split()
+    for word in unformatted:
+        print(word)
+        if word in CUSTOM_EMOJIS:
+            responses.append(CUSTOM_EMOJIS[word])
+
     for c in string.punctuation:
         message = message.replace(c,"")
+
     words = message.lower().split()
-    responses = []
     subsets = []
     for wordCount in range(1,5):
         subsets.append(nWise(words, wordCount))

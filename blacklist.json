@@ -1,7 +1,6 @@
 {
     "blacklist": [
         "new",
-        "cool",
-        "two"
+        "cool"
     ]
 }
