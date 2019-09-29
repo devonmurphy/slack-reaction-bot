@@ -17,7 +17,9 @@ SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
 MIN_EMOJI_LENGTH = 3
 FUZZY_MATCH = True
-MIN_FUZZY_MATCH_RATIO = 55
+
+MIN_FUZZY_CUSTOM_MATCH_RATIO = 80
+MIN_FUZZY_MATCH_RATIO = 85
 
 # map custom words to emojis that might be custom in the slack workspace
 CUSTOM_EMOJIS = {
@@ -121,11 +123,18 @@ def create_responses(message):
 
     if FUZZY_MATCH and len(responses) == 0:
         result = process.extractOne(random.choice(words), CUSTOM_EMOJIS.keys())
-        print("FUZZY CUSTOM MATCH: " + result[0])
-        print("FUZZY CUSTOM RATIO: " + str(result[1]))
-        if result[1] > MIN_FUZZY_MATCH_RATIO:
+        if result[1] > MIN_FUZZY_CUSTOM_MATCH_RATIO:
+            print("FUZZY CUSTOM MATCH: " + result[0])
+            print("FUZZY CUSTOM RATIO: " + str(result[1]))
             response = CUSTOM_EMOJIS[result[0]]
             responses.append(response)
+        else:
+            result = process.extractOne(random.choice(words), EMOJIS)
+            if result[1] > MIN_FUZZY_MATCH_RATIO:
+                print("FUZZY MATCH: " + result[0])
+                print("FUZZY RATIO: " + str(result[1]))
+                response = result[0]
+                responses.append(response)
 
     return responses
         
