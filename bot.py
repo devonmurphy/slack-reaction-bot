@@ -61,6 +61,16 @@ def removeReaction(words, channel, webClient):
         json_file.write(newEmojis)
         webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to " + phrase)
 
+def listReactions(words, channel, webClient):
+    global CUSTOM_EMOJIS
+    formatted = dict(CUSTOM_EMOJIS)
+
+    for phrase in formatted.keys():
+        formatted[phrase] = ":"+formatted[phrase]+":"
+
+    reactionList = json.dumps(formatted, sort_keys=True, indent = 4)
+    text="These are the current phrase:emoji relations:\n" + reactionList
+    webClient.chat_postMessage(channel=channel,text=text)
 
 def blacklist(words, channel, webClient):
     if len(words) < 1:
@@ -101,30 +111,33 @@ COMMANDS = {
     "blacklist": blacklist,
     "unblacklist": unblacklist,
     "add": addReaction,
-    "remove": removeReaction
+    "remove": removeReaction,
+    "list": listReactions
 }
 
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
+    global USER_ID
     data = payload['data']
     webClient = payload['web_client']
-    print('message received')
-    if(('text' in data) == False):
+    if(('bot_id' in data)):
         return
 
-    print(data['text'])
+    if(('text' in data) == False):
+        return
 
     responses = create_responses(data['text'])
     channel = data['channel']
     ts = data['ts']
-    parse_mention(data['text'], channel, webClient)
+    wasMentioned = parse_mention(data['text'], channel, webClient)
     time.sleep(RTM_READ_DELAY)
-    add_reactions(responses, channel, ts, webClient)
+
+    if wasMentioned == False:
+        add_reactions(responses, channel, ts, webClient)
 
 def parse_mention(text, channel, webClient):
     global USER_ID
     if '@' + USER_ID in text:
-        print("mentioned")
         commandFound = False
         words = text.split()
         index = 0
@@ -137,6 +150,10 @@ def parse_mention(text, channel, webClient):
 
         if commandFound == False:
             webClient.chat_postMessage(channel=channel, text="I don't have that command yet.")
+            listCommands(words, channel, webClient)
+        return True
+    else:
+        return False
 
 def load_blacklist():
     global BLACKLIST
@@ -193,7 +210,6 @@ def create_responses(message):
     # first check for words that are not formatted yet
     unformatted = message.split()
     for word in unformatted:
-        print(word)
         if word in CUSTOM_EMOJIS:
             responses.append(CUSTOM_EMOJIS[word])
 
