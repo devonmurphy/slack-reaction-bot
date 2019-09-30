@@ -90,9 +90,9 @@ def blacklist(words, channel, webClient):
             BLACKLIST.append(reaction)
             newBlacklist = json.dumps({ "blacklist": BLACKLIST }, indent=4)
             json_file.write(newBlacklist)
-            webClient.chat_postMessage(channel=channel, text="Blacklisted reaction! Now I won't use " + reaction + " as a reaction")
+            webClient.chat_postMessage(channel=channel, text="Blacklisted reaction! Now I won't use :" + reaction + ": as a reaction")
         else:
-            webClient.chat_postMessage(channel=channel, text=reaction + " is already blacklisted")
+            webClient.chat_postMessage(channel=channel, text=":" + reaction + ": is already blacklisted")
 
 def unblacklist(words, channel, webClient):
     global BLACKLIST
@@ -113,9 +113,9 @@ def unblacklist(words, channel, webClient):
             BLACKLIST.remove(reaction)
             newBlacklist = json.dumps({ "blacklist": BLACKLIST }, indent=4)
             json_file.write(newBlacklist)
-            webClient.chat_postMessage(channel=channel, text="Unblacklisted reaction! Now I will use " + reaction + " as a reaction")
+            webClient.chat_postMessage(channel=channel, text="Unblacklisted reaction! Now I will use :" + reaction + ": as a reaction")
         else:
-            webClient.chat_postMessage(channel=channel, text=reaction + " is not blacklisted, feel free to use it")
+            webClient.chat_postMessage(channel=channel, text=":" + reaction + ": is not blacklisted, feel free to use it")
 
 COMMANDS = {
     "help": listCommands,
