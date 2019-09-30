@@ -34,7 +34,7 @@ def addReaction(words, channel, webClient):
     phrase = words[0]
     reaction = words[1]
     if phrase in CUSTOM_EMOJIS:
-        webClient.chat_postMessage(channel=channel, text="Command Error! This phrase already exists! Currently whenever " + phrase + " is said I will react with " + CUSTOM_EMOJIS[phrase])
+        webClient.chat_postMessage(channel=channel, text="Command Error! This phrase already exists! Currently whenever " + phrase + " is said I will react with :" + CUSTOM_EMOJIS[phrase] + ":")
         return
 
     CUSTOM_EMOJIS[phrase] = reaction
@@ -42,7 +42,7 @@ def addReaction(words, channel, webClient):
     with open("custom_emojis.json", "w") as json_file:
         newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
         json_file.write(newEmojis)
-        webClient.chat_postMessage(channel=channel, text="Added reaction! Now whenever " + phrase + " is said I will react with " + reaction)
+        webClient.chat_postMessage(channel=channel, text="Added reaction! Now whenever " + phrase + " is said I will react with :" + reaction + ":")
 
 def removeReaction(words, channel, webClient):
     if len(words) < 1:
@@ -54,12 +54,11 @@ def removeReaction(words, channel, webClient):
         webClient.chat_postMessage(channel=channel, text="Command Error! This phrase doesn't exist!")
         return
 
-    del CUSTOM_EMOJIS[phrase]
-
     with open("custom_emojis.json", "w") as json_file:
         newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
         json_file.write(newEmojis)
-        webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to " + phrase)
+        webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to " + phrase + " with :" + CUSTOM_EMOJIS[phrase] + ":")
+        del CUSTOM_EMOJIS[phrase]
 
 def listReactions(words, channel, webClient):
     global CUSTOM_EMOJIS
@@ -73,6 +72,7 @@ def listReactions(words, channel, webClient):
     webClient.chat_postMessage(channel=channel,text=text)
 
 def blacklist(words, channel, webClient):
+    global BLACKLIST
     if len(words) < 1:
         formatted = BLACKLIST.copy()
         index = 0
@@ -95,8 +95,14 @@ def blacklist(words, channel, webClient):
             webClient.chat_postMessage(channel=channel, text=reaction + " is already blacklisted")
 
 def unblacklist(words, channel, webClient):
+    global BLACKLIST
     if len(words) < 1:
-        text="The emojis that are blacklisted currently are:\n" + "\n".join(BLACKLIST)+"\n\n\n"
+        formatted = BLACKLIST.copy()
+        index = 0
+        for word in formatted:
+            formatted[index] = ":"+word+":"
+            index += 1
+        text="The emojis that are blacklisted currently are:\n" + "\n".join(formatted)+"\n\n\n"
         text+="If you would like to unblacklist an emoji, the command format is:\nunblacklist emoji-name"
         webClient.chat_postMessage(channel=channel,text=text) 
         return
