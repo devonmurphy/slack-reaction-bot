@@ -32,17 +32,20 @@ def addReaction(words, channel, webClient):
         return
 
     phrase = words[0]
-    reaction = words[1]
+    reaction = words[1].replace(":","")
+    text = ""
     if phrase in CUSTOM_EMOJIS:
-        webClient.chat_postMessage(channel=channel, text="Command Error! This phrase already exists! Currently whenever " + phrase + " is said I will react with :" + CUSTOM_EMOJIS[phrase] + ":")
-        return
+        text = "Replaced"
 
     CUSTOM_EMOJIS[phrase] = reaction
 
     with open("custom_emojis.json", "w") as json_file:
         newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
         json_file.write(newEmojis)
-        webClient.chat_postMessage(channel=channel, text="Added reaction! Now whenever " + phrase + " is said I will react with :" + reaction + ":")
+        if text == "":
+            text += "Added"
+        text += " reaction! Now whenever " + phrase + " is said I will react with :" + reaction + ":"
+        webClient.chat_postMessage(channel=channel, text= text)
 
 def removeReaction(words, channel, webClient):
     if len(words) < 1:
