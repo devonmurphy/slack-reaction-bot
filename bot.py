@@ -32,7 +32,7 @@ def addReaction(words, channel, webClient):
         return
 
     phrase = words[0]
-    reaction = words[1].replace(":","")
+    reaction = words[1].lower().replace(":","")
     text = ""
     if phrase in CUSTOM_EMOJIS:
         text = "Replaced"
