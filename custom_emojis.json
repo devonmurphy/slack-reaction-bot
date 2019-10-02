@@ -63,5 +63,8 @@
     "the game": "stonk-down",
     "lost": "stonk-down",
     "<@U39A63ERE>": "flag-jp",
-    "japan": "flag-jp"
+    "japan": "flag-jp",
+    "more": "stonk-up",
+    "lose": "stonk-down",
+    "ok": "stonk-flat"
 }
