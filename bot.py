@@ -24,7 +24,7 @@ MIN_FUZZY_CUSTOM_MATCH_RATIO = 60
 CUSTOM_EMOJIS = {}
 BLACKLIST = []
 
-def listCommands(words, channel, webClient):
+def listCommands(channel, webClient):
     webClient.chat_postMessage(channel=channel, text="my commands are:\n"+"\n".join(COMMANDS.keys()))
 
 def addReaction(words, channel, webClient):
@@ -157,7 +157,10 @@ def parse_mention(text, channel, webClient):
         commandFound = False
         text = text.replace('“','"')
         text = text.replace('”','"')
-        words = shlex.split(text)
+        try:
+            words = shlex.split(text)
+        except:
+            words = []
         print(words)
         index = 0
         for word in words:
@@ -169,7 +172,7 @@ def parse_mention(text, channel, webClient):
 
         if commandFound == False:
             webClient.chat_postMessage(channel=channel, text="I don't have that command yet.")
-            listCommands(words, channel, webClient)
+            listCommands(channel, webClient)
         return True
     else:
         return False
