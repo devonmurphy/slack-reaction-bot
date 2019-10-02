@@ -22,7 +22,7 @@
     "goose": "goose",
     "kungfurabbi": "party",
     "<@U5ZACNY57>": "gix-monkey",
-    "<@U4K53UB98>": "heart",
+    "<@U4K53UB98>": "bear",
     "<@U4T72EVU2>": "party",
     "<@UEP4J4MUL>": "hogaak",
     "<@U39EVB0SV>": "kanyemaga",
@@ -47,5 +47,10 @@
     "red": "mana-r",
     "green": "mana-g",
     "white": "mana-w",
-    "black": "mana-b"
+    "black": "mana-b",
+    "rick": "bear",
+    "chuck": "nerd_face",
+    "cop": "two_hearts",
+    "god": "hogaak",
+    "channel": "police_car"
 }
