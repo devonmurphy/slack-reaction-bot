@@ -21,6 +21,7 @@ MIN_EMOJI_LENGTH = 2
 FUZZY_MATCH = False
 MIN_FUZZY_CUSTOM_MATCH_RATIO = 60
 
+# the will get loaded in from json files
 CUSTOM_EMOJIS = {}
 BLACKLIST = []
 
