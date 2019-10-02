@@ -1,4 +1,5 @@
 import os
+import shlex
 import time
 import re
 import random
@@ -34,6 +35,7 @@ def addReaction(words, channel, webClient):
     phrase = words[0]
     reaction = words[1].lower().replace(":","")
     text = ""
+
     if phrase in CUSTOM_EMOJIS:
         text = "Replaced"
 
@@ -44,7 +46,7 @@ def addReaction(words, channel, webClient):
         json_file.write(newEmojis)
         if text == "":
             text += "Added"
-        text += " reaction! Now whenever " + phrase + " is said I will react with :" + reaction + ":"
+        text += " reaction! Now whenever \"" + phrase + "\" is said I will react with :" + reaction + ":"
         webClient.chat_postMessage(channel=channel, text= text)
 
 def removeReaction(words, channel, webClient):
@@ -153,7 +155,10 @@ def parse_mention(text, channel, webClient):
     global USER_ID
     if '@' + USER_ID in text:
         commandFound = False
-        words = text.split()
+        text = text.replace('“','"')
+        text = text.replace('”','"')
+        words = shlex.split(text)
+        print(words)
         index = 0
         for word in words:
             if word in COMMANDS.keys():
