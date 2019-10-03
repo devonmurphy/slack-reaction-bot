@@ -66,5 +66,13 @@
     "japan": "flag-jp",
     "more": "stonk-up",
     "lose": "stonk-down",
-    "ok": "stonk-flat"
+    "ok": "stonk-flat",
+    "two": "mana-2 1234 ",
+    "three": "mana-3 three ",
+    "amazing": "stonk-up",
+    "high": "stonk-up",
+    "agree": "10-4",
+    "hear": "10-4",
+    "heard": "10-4",
+    "[[$prismatic vista]]": "dollarsign"
 }

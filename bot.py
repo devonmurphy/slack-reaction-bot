@@ -29,7 +29,7 @@ def listCommands(words, channel, webClient):
     webClient.chat_postMessage(channel=channel, text="my commands are:\n"+"\n".join(COMMANDS.keys()))
 
 def addReaction(words, channel, webClient):
-    if len(words) < 2:
+    if len(words) != 2:
         webClient.chat_postMessage(channel=channel, text="Command Error! command format is:\nadd phrase emoji-name")
         return
 
@@ -69,6 +69,7 @@ def removeReaction(words, channel, webClient):
 def listReactions(words, channel, webClient):
     global CUSTOM_EMOJIS
     formatted = dict(CUSTOM_EMOJIS)
+
 
     for phrase in formatted.keys():
         formatted[phrase] = ":"+formatted[phrase]+":"
