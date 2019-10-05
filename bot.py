@@ -23,6 +23,7 @@ MIN_FUZZY_CUSTOM_MATCH_RATIO = 60
 
 # the will get loaded in from json files
 CUSTOM_EMOJIS = {}
+CUSTOM_USER_EMOJIS = {}
 BLACKLIST = []
 USERS = {}
 
@@ -30,33 +31,65 @@ def listCommands(words, channel, userName, webClient):
     webClient.chat_postMessage(channel=channel, text="my commands are:\n"+"\n".join(COMMANDS.keys()))
 
 def addReaction(words, channel, userName, webClient):
-    if len(words) != 2:
-        webClient.chat_postMessage(channel=channel, text="Command Error! command format is:\nadd phrase emoji-name")
+    global CUSTOM_EMOJIS
+    global CUSTOM_USER_EMOJIS
+    if len(words) < 2 or len(words) > 3:
+        webClient.chat_postMessage(channel=channel, text="Command Error! command formats are:\nadd phrase emoji-name\nadd \"multi word phrase\" emoji-name\nadd @username phrase emoji-name")
         return
 
-    phrase = words[0]
-    reaction = words[1].lower().replace(":","")
-    text = ""
+    if len(words) == 2:
+        phrase = words[0]
+        reaction = words[1].lower().replace(":","")
+        text = ""
 
-    if len(phrase) < 3:
-        webClient.chat_postMessage(channel=channel, text="Command Error! phrase must be atleast 3 characters. Command format is:\nadd phrase emoji-name")
-        return
+        if len(phrase) < 3:
+            webClient.chat_postMessage(channel=channel, text="Command Error! phrase must be at least 3 characters. Command format is:\nadd phrase emoji-name")
+            return
+
+        if phrase in CUSTOM_EMOJIS:
+            text = "Replaced"
+
+        CUSTOM_EMOJIS[phrase] = reaction
+        #CUSTOM_EMOJIS[phrase] = { "reaction": reaction, "user": userName}
+
+        with open("custom_emojis.json", "w") as json_file:
+            newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
+            json_file.write(newEmojis)
+            if text == "":
+                text += "Added"
+            text += " reaction! Now whenever \"" + phrase + "\" is said I will react with :" + reaction + ":"
+            print(userName + " ------ " + text)
+            webClient.chat_postMessage(channel=channel, text= text)
 
 
-    if phrase in CUSTOM_EMOJIS:
-        text = "Replaced"
+    elif len(words) == 3:
+        user = words[0]
+        phrase = words[1]
+        reaction = words[2].lower().replace(":","")
+        text = ""
 
-    CUSTOM_EMOJIS[phrase] = reaction
-    #CUSTOM_EMOJIS[phrase] = { "reaction": reaction, "user": userName}
+        if len(phrase) < 3:
+            webClient.chat_postMessage(channel=channel, text="Command Error! phrase must be at least 3 characters. Command format is:\nadd phrase emoji-name")
+            return
 
-    with open("custom_emojis.json", "w") as json_file:
-        newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
-        json_file.write(newEmojis)
-        if text == "":
-            text += "Added"
-        text += " reaction! Now whenever \"" + phrase + "\" is said I will react with :" + reaction + ":"
-        print(userName + " ------ " + text)
-        webClient.chat_postMessage(channel=channel, text= text)
+        if userName not in CUSTOM_USER_EMOJIS:
+            CUSTOM_USER_EMOJIS[userName] = {}
+
+        if phrase in CUSTOM_USER_EMOJIS[userName]:
+            text = "Replaced"
+
+        CUSTOM_USER_EMOJIS[userName][phrase] = reaction
+        with open("custom_user_emojis.json", "w") as json_file:
+            newEmojis = json.dumps(CUSTOM_USER_EMOJIS, indent=4)
+            userId = [k for k,v in USERS.items() if (v) == userName][0]
+            json_file.write(newEmojis)
+            if text == "":
+                text += "Added"
+            text += " reaction! Now whenever "+ userId + " says \"" + phrase + "\" I will react with :" + reaction + ":"
+            print(userName + " ------ " + text)
+            webClient.chat_postMessage(channel=channel, text= text)
+
+
 
 def removeReaction(words, channel, userName, webClient):
     if len(words) < 1:
