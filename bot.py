@@ -319,6 +319,7 @@ def create_responses(message, userId):
             for wordGroup in subset:
                 wordGroup = ' '.join(wordGroup)
                 if wordGroup in EMOJIS:
+                    wordGroup = wordGroup.replace(' ','_')
                     responses.append(wordGroup)
                 if wordGroup in CUSTOM_EMOJIS.keys():
                     responses.append(CUSTOM_EMOJIS[wordGroup])
@@ -350,7 +351,6 @@ def add_reactions(responses, channel, timestamp, webClient):
         if response in BLACKLIST:
             break
 
-        response = response.replace(' ','_')
         print ('Reacted with: ' + response)
 
         webClient.reactions_add(
