@@ -132,6 +132,7 @@ def removeReaction(words, channel, userName, webClient):
 
 def listReactions(words, channel, userName, webClient):
     global CUSTOM_EMOJIS
+    global CUSTOM_USER_EMOJIS
     global USERS
     formatted = dict(CUSTOM_EMOJIS)
 
@@ -140,9 +141,23 @@ def listReactions(words, channel, userName, webClient):
         if phrase in USERS:
             formatted[USERS[phrase]] = formatted[phrase]
             del formatted[phrase]
-
     reactionList = json.dumps(formatted, sort_keys=True, indent = 4)
+
+    formatted = dict(CUSTOM_USER_EMOJIS)
+    for user in formatted.keys():
+        for phrase in list(formatted[user].keys()):
+            formatted[user][phrase] = ":"+formatted[user][phrase]+":"
+            if phrase in USERS:
+                formatted[user][USERS[phrase]] = user[phrase]
+                del formatted[user][phrase]
+        if user in USERS:
+            formatted[USERS[user]] = formatted[user]
+            del formatted[user]
+    userReactionList = json.dumps(formatted, sort_keys=True, indent = 4)
+
+
     text="These are the current phrase:emoji relations:\n" + reactionList
+    text+="\n\n\n These are the current user:phrase:emoji relations:\n" + userReactionList
     webClient.chat_postMessage(channel=channel,text=text)
 
 def blacklist(words, channel, userName, webClient):
