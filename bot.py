@@ -68,8 +68,14 @@ def addReaction(words, channel, userName, webClient):
         reaction = words[2].lower().replace(":","")
         text = ""
 
+        '''
         userIds = [k for k,v in USERS.items() if (v) == user]
-        if len(userIds != 1):
+        if len(userIds) != 1:
+            webClient.chat_postMessage(channel=channel, text="Command Error! That user doesn't exist")
+            return
+        '''
+
+        if user not in USERS:
             webClient.chat_postMessage(channel=channel, text="Command Error! That user doesn't exist")
             return
 
@@ -89,7 +95,7 @@ def addReaction(words, channel, userName, webClient):
             json_file.write(newEmojis)
             if text == "":
                 text += "Added"
-            text += " reaction! Now whenever "+ userIds[0] + " says \"" + phrase + "\" I will react with :" + reaction + ":"
+            text += " reaction! Now whenever " + user + " says \"" + phrase + "\" I will react with :" + reaction + ":"
             print(userName + " ------ " + text)
             webClient.chat_postMessage(channel=channel, text= text)
 
@@ -196,18 +202,20 @@ def react_to_post(**payload):
 
     users = webClient.users_list()
     for user in users['members']:
-        if data['user'] == user['id']:
-            userName = user['name']
-
         userId = "<@" + user['id'] + ">"
         USERS[userId] = user['name']
 
+        if data['user'] == user['id']:
+            currentUserName = user['name']
+            currentUserId = "<@" + user['id'] + ">"
+
+
     channel = data['channel']
     ts = data['ts']
-    wasMentioned = parse_mention(data['text'], channel, userName, webClient)
+    wasMentioned = parse_mention(data['text'], channel, currentUserName, webClient)
 
     if wasMentioned == False:
-        responses = create_responses(data['text'], userName)
+        responses = create_responses(data['text'], currentUserId)
         add_reactions(responses, channel, ts, webClient)
 
 
@@ -248,10 +256,15 @@ def load_blacklist():
 def load_emojis():
     global EMOJIS
     global CUSTOM_EMOJIS
+    global CUSTOM_USER_EMOJIS
 
     # map custom words to emojis that might be custom in the slack workspace
     with open("custom_emojis.json") as json_file:
         CUSTOM_EMOJIS = json.load(json_file)
+
+    # map custom words to emojis that might be custom in the slack workspace for specific users
+    with open("custom_user_emojis.json") as json_file:
+        CUSTOM_USER_EMOJIS = json.load(json_file)
 
     # Load emoji names
     gitUrl = "https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json"
@@ -278,9 +291,10 @@ def nWise(iterable, n=2):
     return zip(*iterableList)
 
 # looks for phrases and words in a message that are also emoji words
-def create_responses(message, userName):
+def create_responses(message, userId):
     global EMOJIS
     global CUSTOM_EMOJIS
+    global CUSTOM_USER_EMOJIS
     responses = []
     # first check for words that are not formatted yet
     unformatted = message.split()
@@ -288,9 +302,9 @@ def create_responses(message, userName):
         if word in CUSTOM_EMOJIS:
             responses.append(CUSTOM_EMOJIS[word])
 
-        if userName in CUSTOM_USER_EMOJIS:
-            if word in CUSTOM_USER_EMOJIS[userName]:
-                responses.append(CUSTOM_USER_EMOJIS[userName][word])
+        if userId in CUSTOM_USER_EMOJIS:
+            if word in CUSTOM_USER_EMOJIS[userId]:
+                responses.append(CUSTOM_USER_EMOJIS[userId][word])
 
     for c in string.punctuation:
         message = message.replace(c,"")
@@ -308,9 +322,9 @@ def create_responses(message, userName):
                     responses.append(wordGroup)
                 if wordGroup in CUSTOM_EMOJIS.keys():
                     responses.append(CUSTOM_EMOJIS[wordGroup])
-                if userName in CUSTOM_USER_EMOJIS:
-                    if wordGroup in CUSTOM_USER_EMOJIS[userName]:
-                        responses.append(CUSTOM_USER_EMOJIS[userName][word])
+                if userId in CUSTOM_USER_EMOJIS:
+                    if wordGroup in CUSTOM_USER_EMOJIS[userId]:
+                        responses.append(CUSTOM_USER_EMOJIS[userId][word])
 
     if FUZZY_MATCH and len(responses) == 0:
         for word in words:
