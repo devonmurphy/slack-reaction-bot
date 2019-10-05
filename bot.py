@@ -106,10 +106,10 @@ def removeReaction(words, channel, userName, webClient):
             return
 
         with open("custom_emojis.json", "w") as json_file:
-            newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
-            json_file.write(newEmojis)
             webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to \"" + phrase + "\" with :" + CUSTOM_EMOJIS[phrase] + ":")
             del CUSTOM_EMOJIS[phrase]
+            newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
+            json_file.write(newEmojis)
     elif len(words) == 2:
         user = words[0]
         phrase = words[1]
@@ -120,10 +120,10 @@ def removeReaction(words, channel, userName, webClient):
             return
 
         with open("custom_user_emojis.json", "w") as json_file:
-            newEmojis = json.dumps(CUSTOM_USER_EMOJIS, indent=4)
-            json_file.write(newEmojis)
             webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react with :" + CUSTOM_USER_EMOJIS[user][phrase] + ": when "+ user + " says \"" + phrase + '"')
             del CUSTOM_USER_EMOJIS[user][phrase]
+            newEmojis = json.dumps(CUSTOM_USER_EMOJIS, indent=4)
+            json_file.write(newEmojis)
 
 
 def listReactions(words, channel, userName, webClient):
