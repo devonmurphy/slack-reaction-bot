@@ -34,7 +34,7 @@ def addReaction(words, channel, userName, webClient):
     global CUSTOM_EMOJIS
     global CUSTOM_USER_EMOJIS
     if len(words) < 2 or len(words) > 3:
-        webClient.chat_postMessage(channel=channel, text="Command Error! command formats are:\nadd phrase emoji-name\nadd \"multi word phrase\" emoji-name\nadd @username phrase emoji-name")
+        webClient.chat_postMessage(channel=channel, text="Command Error! Command formats are:\nadd phrase emoji-name\nadd \"multi word phrase\" emoji-name\nadd @username phrase emoji-name")
         return
 
     if len(words) == 2:
@@ -43,7 +43,7 @@ def addReaction(words, channel, userName, webClient):
         text = ""
 
         if len(phrase) < 3:
-            webClient.chat_postMessage(channel=channel, text="Command Error! phrase must be at least 3 characters. Command format is:\nadd phrase emoji-name")
+            webClient.chat_postMessage(channel=channel, text="Command Error! Phrase must be at least 3 characters. Command formats are:\nadd phrase emoji-name\nadd \"multi word phrase\" emoji-name\nadd @username phrase emoji-name")
             return
 
         if phrase in CUSTOM_EMOJIS:
@@ -68,19 +68,12 @@ def addReaction(words, channel, userName, webClient):
         reaction = words[2].lower().replace(":","")
         text = ""
 
-        '''
-        userIds = [k for k,v in USERS.items() if (v) == user]
-        if len(userIds) != 1:
-            webClient.chat_postMessage(channel=channel, text="Command Error! That user doesn't exist")
-            return
-        '''
-
         if user not in USERS:
-            webClient.chat_postMessage(channel=channel, text="Command Error! That user doesn't exist")
+            webClient.chat_postMessage(channel=channel, text="Command Error! That user doesn't exist. Command formats are:\nadd phrase emoji-name\nadd \"multi word phrase\" emoji-name\nadd @username phrase emoji-name")
             return
 
         if len(phrase) < 3:
-            webClient.chat_postMessage(channel=channel, text="Command Error! phrase must be at least 3 characters. Command format is:\nadd phrase emoji-name")
+            webClient.chat_postMessage(channel=channel, text="Command Error! Phrase must be at least 3 characters. Command formats are:\nadd phrase emoji-name\nadd \"multi word phrase\" emoji-name\nadd @username phrase emoji-name")
             return
 
         if user not in CUSTOM_USER_EMOJIS:
@@ -102,20 +95,36 @@ def addReaction(words, channel, userName, webClient):
 
 
 def removeReaction(words, channel, userName, webClient):
-    if len(words) < 1:
-        webClient.chat_postMessage(channel=channel, text="Command Error! command format is:\nremove phrase")
+    if len(words) < 1 or len(words) > 2:
+        webClient.chat_postMessage(channel=channel, text="Command Error! Command formats are:\nremove phrase\nremove @username phrase")
         return
 
-    phrase = words[0]
-    if phrase not in CUSTOM_EMOJIS:
-        webClient.chat_postMessage(channel=channel, text="Command Error! This phrase doesn't exist!")
-        return
+    if len(words) == 1:
+        phrase = words[0]
+        if phrase not in CUSTOM_EMOJIS:
+            webClient.chat_postMessage(channel=channel, text="Command Error! That phrase does not exist! Command formats are:\nremove phrase\nremove @username phrase")
+            return
 
-    with open("custom_emojis.json", "w") as json_file:
-        newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
-        json_file.write(newEmojis)
-        webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to " + phrase + " with :" + CUSTOM_EMOJIS[phrase] + ":")
-        del CUSTOM_EMOJIS[phrase]
+        with open("custom_emojis.json", "w") as json_file:
+            newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
+            json_file.write(newEmojis)
+            webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to \"" + phrase + "\" with :" + CUSTOM_EMOJIS[phrase] + ":")
+            del CUSTOM_EMOJIS[phrase]
+    elif len(words) == 2:
+        user = words[0]
+        phrase = words[1]
+        if user not in CUSTOM_USER_EMOJIS:
+            CUSTOM_USER_EMOJIS[user] = {}
+        if phrase not in CUSTOM_USER_EMOJIS[user]:
+            webClient.chat_postMessage(channel=channel, text="Command Error! This phrase doesn't exist for that user! Command formats are:\nremove phrase\nremove @username phrase")
+            return
+
+        with open("custom_user_emojis.json", "w") as json_file:
+            newEmojis = json.dumps(CUSTOM_USER_EMOJIS, indent=4)
+            json_file.write(newEmojis)
+            webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react with :" + CUSTOM_USER_EMOJIS[user][phrase] + ": when "+ user + " says \"" + phrase + '"')
+            del CUSTOM_USER_EMOJIS[user][phrase]
+
 
 def listReactions(words, channel, userName, webClient):
     global CUSTOM_EMOJIS
