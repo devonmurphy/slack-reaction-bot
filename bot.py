@@ -203,7 +203,7 @@ def react_to_post(**payload):
     wasMentioned = parse_mention(data['text'], channel, userName, webClient)
 
     if wasMentioned == False:
-        responses = create_responses(data['text'])
+        responses = create_responses(data['text'], userName)
         add_reactions(responses, channel, ts, webClient)
 
 
@@ -274,7 +274,7 @@ def nWise(iterable, n=2):
     return zip(*iterableList)
 
 # looks for phrases and words in a message that are also emoji words
-def create_responses(message):
+def create_responses(message, userName):
     global EMOJIS
     global CUSTOM_EMOJIS
     responses = []
@@ -283,6 +283,10 @@ def create_responses(message):
     for word in unformatted:
         if word in CUSTOM_EMOJIS:
             responses.append(CUSTOM_EMOJIS[word])
+
+        if userName in CUSTOM_USER_EMOJIS:
+            if word in CUSTOM_USER_EMOJIS[userName]:
+                responses.append(CUSTOM_USER_EMOJIS[userName][word])
 
     for c in string.punctuation:
         message = message.replace(c,"")
@@ -300,7 +304,9 @@ def create_responses(message):
                     responses.append(wordGroup)
                 if wordGroup in CUSTOM_EMOJIS.keys():
                     responses.append(CUSTOM_EMOJIS[wordGroup])
-
+                if userName in CUSTOM_USER_EMOJIS:
+                    if wordGroup in CUSTOM_USER_EMOJIS[userName]:
+                        responses.append(CUSTOM_USER_EMOJIS[userName][word])
 
     if FUZZY_MATCH and len(responses) == 0:
         for word in words:
@@ -314,6 +320,8 @@ def create_responses(message):
                 response = CUSTOM_EMOJIS[result[0]]
                 responses.append(response)
 
+    # get rid of duplicate responses
+    responses = list(set(responses))
     return responses
         
 # Sends the response back to the channel
