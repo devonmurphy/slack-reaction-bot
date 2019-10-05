@@ -1,6 +1,11 @@
 {
     "<@U3ANADYMU>": {
-        "hello": "8ball",
-        "wassup": "poop"
+        "hello": ":8ball:",
+        "wassup": ":poop:",
+        "test": "mana-g",
+        "neat": "thumbsup::skin-tone-3"
+    },
+    "<@U4T72EVU2>": {
+        "neat": "thumbsup::skin-tone-3"
     }
 }

@@ -67,8 +67,6 @@
     "more": "stonk-up",
     "lose": "stonk-down",
     "ok": "stonk-flat",
-    "two": "mana-2 1234 ",
-    "three": "mana-3 three ",
     "amazing": "stonk-up",
     "high": "stonk-up",
     "agree": "10-4",
@@ -88,5 +86,7 @@
     "msrp": "moneybag",
     "bought": "money_mouth_face",
     "sell": "money_with_wings",
-    "brawl": "fist"
+    "brawl": "fist",
+    "test": "mana-r",
+    "aaaaa": "thumbsup::skin-tone-3"
 }

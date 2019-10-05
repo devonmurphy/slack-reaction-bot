@@ -14,7 +14,8 @@ from slack import RTMClient
 
 # constants and globals
 RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
-EMOJIS = []
+EMOJIS_UNDERSCORE = []
+EMOJIS_DASH = []
 WORKSPACE_EMOJIS_DASH = []
 WORKSPACE_EMOJIS_UNDERSCORE = []
 SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
@@ -31,6 +32,27 @@ CUSTOM_USER_EMOJIS = {}
 BLACKLIST = []
 USERS = {}
 
+def checkIfReactionExists(reaction):
+    global EMOJIS_UNDERSCORE
+    global EMOJIS_DASH
+    global WORKSPACE_EMOJIS_DASH
+    global WORKSPACE_EMOJIS_UNDERSCORE
+    if reaction.replace("_", " ") in EMOJIS_UNDERSCORE:
+        print('emojis')
+        return True
+    if reaction.replace("_", " ") in EMOJIS_DASH:
+        print('emojis')
+        return True
+    if reaction.replace("_", " ") in WORKSPACE_EMOJIS_UNDERSCORE:
+        print('workspace underscore')
+        return True
+    elif reaction.replace("-", " ") in WORKSPACE_EMOJIS_DASH:
+        print('workspace dash')
+        return True
+    else:
+        print("False")
+        return False
+
 def listCommands(words, channel, userName, webClient):
     webClient.chat_postMessage(channel=channel, text="my commands are:\n"+"\n".join(COMMANDS.keys()))
 
@@ -43,7 +65,10 @@ def addReaction(words, channel, userName, webClient):
 
     if len(words) == 2:
         phrase = words[0]
-        reaction = words[1].lower().replace(":","")
+        if('::skin-tone' in words[1]):
+            reaction = words[1].lower()[1:-1]
+        else:
+            reaction = words[1].lower().replace(":","")
         text = ""
 
         if len(phrase) < 3:
@@ -61,6 +86,7 @@ def addReaction(words, channel, userName, webClient):
             json_file.write(newEmojis)
             if text == "":
                 text += "Added"
+
             text += " reaction! Now whenever \"" + phrase + "\" is said I will react with :" + reaction + ":"
             print(userName + " ------ " + text)
             webClient.chat_postMessage(channel=channel, text= text)
@@ -69,7 +95,11 @@ def addReaction(words, channel, userName, webClient):
     elif len(words) == 3:
         user = words[0]
         phrase = words[1]
-        reaction = words[2].lower().replace(":","")
+        if('::skin-tone' in words[2]):
+            reaction = words[2].lower()[1:-1]
+        else:
+            reaction = words[2].lower().replace(":","")
+
         text = ""
 
         if user not in USERS:
@@ -134,19 +164,25 @@ def listReactions(words, channel, userName, webClient):
     global CUSTOM_EMOJIS
     global CUSTOM_USER_EMOJIS
     global USERS
-    formatted = dict(CUSTOM_EMOJIS)
+    formatted = CUSTOM_EMOJIS.copy()
 
     for phrase in list(formatted.keys()):
-        formatted[phrase] = ":"+formatted[phrase]+":"
+        if "skin-tone" in formatted[phrase]:
+            formatted[phrase] = formatted[phrase]
+        else:
+            formatted[phrase] = ":"+formatted[phrase]+":"
         if phrase in USERS:
             formatted[USERS[phrase]] = formatted[phrase]
             del formatted[phrase]
     reactionList = json.dumps(formatted, sort_keys=True, indent = 4)
 
-    formatted = dict(CUSTOM_USER_EMOJIS)
+    formatted = CUSTOM_USER_EMOJIS.copy()
     for user in formatted.keys():
         for phrase in list(formatted[user].keys()):
-            formatted[user][phrase] = ":"+formatted[user][phrase]+":"
+            if "skin-tone" in formatted[user][phrase]:
+                formatted[user][phrase] = formatted[user][phrase]
+            else:
+                formatted[user][phrase] = ":" + formatted[user][phrase].replace(":","") + ":"
             if phrase in USERS:
                 formatted[user][USERS[phrase]] = user[phrase]
                 del formatted[user][phrase]
@@ -282,7 +318,8 @@ def load_blacklist():
 
 
 def load_emojis():
-    global EMOJIS
+    global EMOJIS_UNDERSCORE
+    global EMOJIS_DASH
     global CUSTOM_EMOJIS
     global CUSTOM_USER_EMOJIS
 
@@ -305,9 +342,16 @@ def load_emojis():
     # replace "_" with " " since that is what people will type
     for emoji in emojiJson:
         for name in emoji['short_names']:
-            name = name.replace('_',' ')
-            if len(name) >= MIN_EMOJI_LENGTH:
-                EMOJIS.append(name)
+            if '_' in name and '-' in name:
+                print("throwing away " + name)
+            elif '_' in name:
+                name = name.replace('_',' ')
+                if len(name) >= MIN_EMOJI_LENGTH:
+                    EMOJIS_UNDERSCORE.append(name)
+            elif '-' in name:
+                name = name.replace('-',' ')
+                if len(name) >= MIN_EMOJI_LENGTH:
+                    EMOJIS_DASH.append(name)
 
     # Load custom workspace emoji names
     workspaceEmojisRaw = list(json.loads(subprocess.check_output(["curl", "-X", "POST", "-H", SLACK_CURL_TOKEN, "https://slack.com/api/emoji.list"]))['emoji'].keys())
@@ -332,8 +376,10 @@ def nWise(iterable, n=2):
 
 # looks for phrases and words in a message that are also emoji words
 def create_responses(message, userId):
-    global EMOJIS
-    global WORKSPACE_EMOJIS
+    global EMOJIS_UNDERSCORE
+    global EMOJIS_DASH
+    global WORKSPACE_EMOJIS_DASH
+    global WORKSPACE_EMOJIS_UNDERSCORE
     global CUSTOM_EMOJIS
     global CUSTOM_USER_EMOJIS
     responses = []
@@ -359,8 +405,11 @@ def create_responses(message, userId):
         if subset != None:
             for wordGroup in subset:
                 wordGroup = ' '.join(wordGroup)
-                if wordGroup in EMOJIS:
+                if wordGroup in EMOJIS_UNDERSCORE:
                     wordGroup = wordGroup.replace(' ','_')
+                    responses.append(wordGroup)
+                if wordGroup in EMOJIS_DASH:
+                    wordGroup = wordGroup.replace(' ','-')
                     responses.append(wordGroup)
                 if wordGroup in WORKSPACE_EMOJIS_DASH:
                     wordGroup = wordGroup.replace(' ','-')
@@ -372,7 +421,7 @@ def create_responses(message, userId):
                     responses.append(CUSTOM_EMOJIS[wordGroup])
                 if userId in CUSTOM_USER_EMOJIS:
                     if wordGroup in CUSTOM_USER_EMOJIS[userId]:
-                        responses.append(CUSTOM_USER_EMOJIS[userId][word])
+                        responses.append(CUSTOM_USER_EMOJIS[userId][wordGroup])
 
     if FUZZY_MATCH and len(responses) == 0:
         for word in words:
@@ -396,7 +445,7 @@ def add_reactions(responses, channel, timestamp, webClient):
 
     for response in responses:
         if response in BLACKLIST:
-            break
+            continue
 
         print ('Reacted with: ' + response)
 
@@ -405,6 +454,7 @@ def add_reactions(responses, channel, timestamp, webClient):
             name=response,
             timestamp=timestamp
         )
+        time.sleep(.1)
 
 if __name__ == "__main__":
     load_blacklist()
