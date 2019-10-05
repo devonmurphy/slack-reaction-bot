@@ -37,6 +37,11 @@ def addReaction(words, channel, webClient):
     reaction = words[1].lower().replace(":","")
     text = ""
 
+    if len(phrase) < 3:
+        webClient.chat_postMessage(channel=channel, text="Command Error! phrase must be atleast 3 characters. Command format is:\nadd phrase emoji-name")
+        return
+
+
     if phrase in CUSTOM_EMOJIS:
         text = "Replaced"
 
@@ -144,13 +149,12 @@ def react_to_post(**payload):
     if(('text' in data) == False):
         return
 
-    responses = create_responses(data['text'])
     channel = data['channel']
     ts = data['ts']
     wasMentioned = parse_mention(data['text'], channel, webClient)
-    time.sleep(RTM_READ_DELAY)
 
     if wasMentioned == False:
+        responses = create_responses(data['text'])
         add_reactions(responses, channel, ts, webClient)
 
 def parse_mention(text, channel, webClient):
@@ -218,13 +222,6 @@ def nWise(iterable, n=2):
         for j in range(i):
             next(iterableList[i], None)
     return zip(*iterableList)
-
-def parse_message(slack_events):
-    for event in slack_events:
-        if event["type"] == "message" and not "subtype" in event:
-            responses = create_responses(event["text"])
-            return responses, event["channel"], event["ts"]
-    return None, None, None
 
 # looks for phrases and words in a message that are also emoji words
 def create_responses(message):
