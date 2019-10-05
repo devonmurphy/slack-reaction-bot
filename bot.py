@@ -68,24 +68,28 @@ def addReaction(words, channel, userName, webClient):
         reaction = words[2].lower().replace(":","")
         text = ""
 
+        userIds = [k for k,v in USERS.items() if (v) == user]
+        if len(userIds != 1):
+            webClient.chat_postMessage(channel=channel, text="Command Error! That user doesn't exist")
+            return
+
         if len(phrase) < 3:
             webClient.chat_postMessage(channel=channel, text="Command Error! phrase must be at least 3 characters. Command format is:\nadd phrase emoji-name")
             return
 
-        if userName not in CUSTOM_USER_EMOJIS:
-            CUSTOM_USER_EMOJIS[userName] = {}
+        if user not in CUSTOM_USER_EMOJIS:
+            CUSTOM_USER_EMOJIS[user] = {}
 
-        if phrase in CUSTOM_USER_EMOJIS[userName]:
+        if phrase in CUSTOM_USER_EMOJIS[user]:
             text = "Replaced"
 
-        CUSTOM_USER_EMOJIS[userName][phrase] = reaction
+        CUSTOM_USER_EMOJIS[user][phrase] = reaction
         with open("custom_user_emojis.json", "w") as json_file:
             newEmojis = json.dumps(CUSTOM_USER_EMOJIS, indent=4)
-            userId = [k for k,v in USERS.items() if (v) == userName][0]
             json_file.write(newEmojis)
             if text == "":
                 text += "Added"
-            text += " reaction! Now whenever "+ userId + " says \"" + phrase + "\" I will react with :" + reaction + ":"
+            text += " reaction! Now whenever "+ userIds[0] + " says \"" + phrase + "\" I will react with :" + reaction + ":"
             print(userName + " ------ " + text)
             webClient.chat_postMessage(channel=channel, text= text)
 
