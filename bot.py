@@ -55,6 +55,7 @@ def addReaction(words, channel, userName, webClient):
         if text == "":
             text += "Added"
         text += " reaction! Now whenever \"" + phrase + "\" is said I will react with :" + reaction + ":"
+        print(userName + " ------ " + text)
         webClient.chat_postMessage(channel=channel, text= text)
 
 def removeReaction(words, channel, userName, webClient):
@@ -79,7 +80,6 @@ def listReactions(words, channel, userName, webClient):
     formatted = dict(CUSTOM_EMOJIS)
 
     for phrase in list(formatted.keys()):
-        print(phrase)
         formatted[phrase] = ":"+formatted[phrase]+":"
         if phrase in USERS:
             formatted[USERS[phrase]] = formatted[phrase]
