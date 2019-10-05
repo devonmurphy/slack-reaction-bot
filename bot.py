@@ -14,6 +14,7 @@ from slack import RTMClient
 
 # constants and globals
 RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
+EMOJIS = []
 EMOJIS_UNDERSCORE = []
 EMOJIS_DASH = []
 WORKSPACE_EMOJIS_DASH = []
@@ -33,15 +34,19 @@ BLACKLIST = []
 USERS = {}
 
 def checkIfReactionExists(reaction):
+    global EMOJIS
     global EMOJIS_UNDERSCORE
     global EMOJIS_DASH
     global WORKSPACE_EMOJIS_DASH
     global WORKSPACE_EMOJIS_UNDERSCORE
-    if reaction.replace("_", " ") in EMOJIS_UNDERSCORE:
+    if reaction in EMOJIS:
         print('emojis')
         return True
+    if reaction.replace("_", " ") in EMOJIS_UNDERSCORE:
+        print('emojis under')
+        return True
     if reaction.replace("_", " ") in EMOJIS_DASH:
-        print('emojis')
+        print('emojis dash')
         return True
     if reaction.replace("_", " ") in WORKSPACE_EMOJIS_UNDERSCORE:
         print('workspace underscore')
@@ -69,11 +74,13 @@ def addReaction(words, channel, userName, webClient):
             reaction = words[1].lower()[1:-1]
         else:
             reaction = words[1].lower().replace(":","")
+            print(checkIfReactionExists(reaction))
         text = ""
 
         if len(phrase) < 3:
             webClient.chat_postMessage(channel=channel, text="Command Error! Phrase must be at least 3 characters. Command formats are:\nadd phrase emoji-name\nadd \"multi word phrase\" emoji-name\nadd @username phrase emoji-name")
             return
+        print(reaction)
 
         if phrase in CUSTOM_EMOJIS:
             text = "Replaced"
@@ -318,6 +325,7 @@ def load_blacklist():
 
 
 def load_emojis():
+    global EMOJIS
     global EMOJIS_UNDERSCORE
     global EMOJIS_DASH
     global CUSTOM_EMOJIS
@@ -352,6 +360,8 @@ def load_emojis():
                 name = name.replace('-',' ')
                 if len(name) >= MIN_EMOJI_LENGTH:
                     EMOJIS_DASH.append(name)
+            else:
+                EMOJIS.append(name)
 
     # Load custom workspace emoji names
     workspaceEmojisRaw = list(json.loads(subprocess.check_output(["curl", "-X", "POST", "-H", SLACK_CURL_TOKEN, "https://slack.com/api/emoji.list"]))['emoji'].keys())
@@ -376,6 +386,7 @@ def nWise(iterable, n=2):
 
 # looks for phrases and words in a message that are also emoji words
 def create_responses(message, userId):
+    global EMOJIS
     global EMOJIS_UNDERSCORE
     global EMOJIS_DASH
     global WORKSPACE_EMOJIS_DASH
@@ -405,6 +416,8 @@ def create_responses(message, userId):
         if subset != None:
             for wordGroup in subset:
                 wordGroup = ' '.join(wordGroup)
+                if wordGroup in EMOJIS:
+                    responses.append(wordGroup)
                 if wordGroup in EMOJIS_UNDERSCORE:
                     wordGroup = wordGroup.replace(' ','_')
                     responses.append(wordGroup)
