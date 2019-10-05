@@ -1,4 +1,5 @@
 import os
+import subprocess
 import shlex
 import time
 import re
@@ -14,7 +15,10 @@ from slack import RTMClient
 # constants and globals
 RTM_READ_DELAY = .1 # 1 second delay between reading from RTM
 EMOJIS = []
+WORKSPACE_EMOJIS_DASH = []
+WORKSPACE_EMOJIS_UNDERSCORE = []
 SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
+SLACK_CURL_TOKEN = os.environ["SLACK_CURL_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
 MIN_EMOJI_LENGTH = 2
 
@@ -290,6 +294,18 @@ def load_emojis():
             if len(name) >= MIN_EMOJI_LENGTH:
                 EMOJIS.append(name)
 
+    # Load custom workspace emoji names
+    workspaceEmojisRaw = list(json.loads(subprocess.check_output(["curl", "-X", "POST", "-H", SLACK_CURL_TOKEN, "https://slack.com/api/emoji.list"]))['emoji'].keys())
+    for emoji in workspaceEmojisRaw:
+        if '-' in emoji and '_' in emoji:
+            print(emoji + " thrown away!!")
+        elif '-' in emoji:
+            emoji = emoji.replace('-',' ')
+            WORKSPACE_EMOJIS_DASH.append(emoji)
+        elif '_' in emoji:
+            emoji = emoji.replace('_',' ')
+            WORKSPACE_EMOJIS_UNDERSCORE.append(emoji)
+
 
 # returns all sequences of n size ((s1,s2,..,sn),(s2,s3,..,sn)),...
 def nWise(iterable, n=2):
@@ -302,6 +318,7 @@ def nWise(iterable, n=2):
 # looks for phrases and words in a message that are also emoji words
 def create_responses(message, userId):
     global EMOJIS
+    global WORKSPACE_EMOJIS
     global CUSTOM_EMOJIS
     global CUSTOM_USER_EMOJIS
     responses = []
@@ -328,6 +345,12 @@ def create_responses(message, userId):
             for wordGroup in subset:
                 wordGroup = ' '.join(wordGroup)
                 if wordGroup in EMOJIS:
+                    wordGroup = wordGroup.replace(' ','_')
+                    responses.append(wordGroup)
+                if wordGroup in WORKSPACE_EMOJIS_DASH:
+                    wordGroup = wordGroup.replace(' ','-')
+                    responses.append(wordGroup)
+                if wordGroup in WORKSPACE_EMOJIS_UNDERSCORE:
                     wordGroup = wordGroup.replace(' ','_')
                     responses.append(wordGroup)
                 if wordGroup in CUSTOM_EMOJIS.keys():
@@ -371,8 +394,10 @@ def add_reactions(responses, channel, timestamp, webClient):
 if __name__ == "__main__":
     load_blacklist()
     load_emojis()
+    print("loaded emojis")
     slack_client = RTMClient(
         token=SLACK_TOKEN,
         connect_method='rtm.start'
     )
+    print("starting client")
     slack_client.start()
