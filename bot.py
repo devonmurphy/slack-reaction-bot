@@ -24,11 +24,12 @@ MIN_FUZZY_CUSTOM_MATCH_RATIO = 60
 # the will get loaded in from json files
 CUSTOM_EMOJIS = {}
 BLACKLIST = []
+USERS = {}
 
-def listCommands(words, channel, webClient):
+def listCommands(words, channel, userName, webClient):
     webClient.chat_postMessage(channel=channel, text="my commands are:\n"+"\n".join(COMMANDS.keys()))
 
-def addReaction(words, channel, webClient):
+def addReaction(words, channel, userName, webClient):
     if len(words) != 2:
         webClient.chat_postMessage(channel=channel, text="Command Error! command format is:\nadd phrase emoji-name")
         return
@@ -46,6 +47,7 @@ def addReaction(words, channel, webClient):
         text = "Replaced"
 
     CUSTOM_EMOJIS[phrase] = reaction
+    #CUSTOM_EMOJIS[phrase] = { "reaction": reaction, "user": userName}
 
     with open("custom_emojis.json", "w") as json_file:
         newEmojis = json.dumps(CUSTOM_EMOJIS, indent=4)
@@ -55,7 +57,7 @@ def addReaction(words, channel, webClient):
         text += " reaction! Now whenever \"" + phrase + "\" is said I will react with :" + reaction + ":"
         webClient.chat_postMessage(channel=channel, text= text)
 
-def removeReaction(words, channel, webClient):
+def removeReaction(words, channel, userName, webClient):
     if len(words) < 1:
         webClient.chat_postMessage(channel=channel, text="Command Error! command format is:\nremove phrase")
         return
@@ -71,19 +73,23 @@ def removeReaction(words, channel, webClient):
         webClient.chat_postMessage(channel=channel, text="Removed reaction! Now I will not react to " + phrase + " with :" + CUSTOM_EMOJIS[phrase] + ":")
         del CUSTOM_EMOJIS[phrase]
 
-def listReactions(words, channel, webClient):
+def listReactions(words, channel, userName, webClient):
     global CUSTOM_EMOJIS
+    global USERS
     formatted = dict(CUSTOM_EMOJIS)
 
-
-    for phrase in formatted.keys():
+    for phrase in list(formatted.keys()):
+        print(phrase)
         formatted[phrase] = ":"+formatted[phrase]+":"
+        if phrase in USERS:
+            formatted[USERS[phrase]] = formatted[phrase]
+            del formatted[phrase]
 
     reactionList = json.dumps(formatted, sort_keys=True, indent = 4)
     text="These are the current phrase:emoji relations:\n" + reactionList
     webClient.chat_postMessage(channel=channel,text=text)
 
-def blacklist(words, channel, webClient):
+def blacklist(words, channel, userName, webClient):
     global BLACKLIST
     if len(words) < 1:
         formatted = BLACKLIST.copy()
@@ -106,7 +112,7 @@ def blacklist(words, channel, webClient):
         else:
             webClient.chat_postMessage(channel=channel, text=":" + reaction + ": is already blacklisted")
 
-def unblacklist(words, channel, webClient):
+def unblacklist(words, channel, userName, webClient):
     global BLACKLIST
     if len(words) < 1:
         formatted = BLACKLIST.copy()
@@ -141,23 +147,33 @@ COMMANDS = {
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
     global USER_ID
+    global USERS
     data = payload['data']
     webClient = payload['web_client']
+
     if(('bot_id' in data)):
         return
 
     if(('text' in data) == False):
         return
 
+    users = webClient.users_list()
+    for user in users['members']:
+        if data['user'] == user['id']:
+            userName = user['name']
+
+        userId = "<@" + user['id'] + ">"
+        USERS[userId] = user['name']
+
     channel = data['channel']
     ts = data['ts']
-    wasMentioned = parse_mention(data['text'], channel, webClient)
+    wasMentioned = parse_mention(data['text'], channel, userName, webClient)
 
     if wasMentioned == False:
         responses = create_responses(data['text'])
         add_reactions(responses, channel, ts, webClient)
 
-def parse_mention(text, channel, webClient):
+def parse_mention(text, channel, userName, webClient):
     global USER_ID
     if '@' + USER_ID in text:
         commandFound = False
@@ -171,7 +187,7 @@ def parse_mention(text, channel, webClient):
         index = 0
         for word in words:
             if word in COMMANDS.keys():
-                COMMANDS[word](words[index + 1:], channel, webClient)
+                COMMANDS[word](words[index + 1:], channel, userName, webClient)
                 commandFound = True
                 break
             index += 1
