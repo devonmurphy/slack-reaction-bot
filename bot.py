@@ -173,6 +173,7 @@ def react_to_post(**payload):
         responses = create_responses(data['text'])
         add_reactions(responses, channel, ts, webClient)
 
+
 def parse_mention(text, channel, userName, webClient):
     global USER_ID
     if '@' + USER_ID in text:
@@ -194,7 +195,7 @@ def parse_mention(text, channel, userName, webClient):
 
         if commandFound == False:
             webClient.chat_postMessage(channel=channel, text="I don't have that command yet.")
-            listCommands(words, channel, webClient)
+            listCommands(words, channel, userName, webClient)
         return True
     else:
         return False
