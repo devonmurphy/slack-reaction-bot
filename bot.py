@@ -374,6 +374,8 @@ def load_emojis():
         elif '_' in emoji:
             emoji = emoji.replace('_',' ')
             WORKSPACE_EMOJIS_UNDERSCORE.append(emoji)
+        else:
+            WORKSPACE_EMOJIS_UNDERSCORE.append(emoji)
 
 
 # returns all sequences of n size ((s1,s2,..,sn),(s2,s3,..,sn)),...
