@@ -19,6 +19,7 @@ EMOJIS_UNDERSCORE = []
 EMOJIS_DASH = []
 WORKSPACE_EMOJIS_DASH = []
 WORKSPACE_EMOJIS_UNDERSCORE = []
+POKEMON = []
 SLACK_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_CURL_TOKEN = os.environ["SLACK_CURL_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
@@ -330,6 +331,7 @@ def load_emojis():
     global EMOJIS_DASH
     global CUSTOM_EMOJIS
     global CUSTOM_USER_EMOJIS
+    global POKEMON
 
     # map custom words to emojis that might be custom in the slack workspace
     with open("custom_emojis.json") as json_file:
@@ -372,8 +374,12 @@ def load_emojis():
             emoji = emoji.replace('-',' ')
             WORKSPACE_EMOJIS_DASH.append(emoji)
         elif '_' in emoji:
-            emoji = emoji.replace('_',' ')
-            WORKSPACE_EMOJIS_UNDERSCORE.append(emoji)
+            if emoji.index('_') == 0:
+                emoji = emoji.replace('_','')
+                POKEMON.append(emoji)
+            else:
+                emoji = emoji.replace('_',' ')
+                WORKSPACE_EMOJIS_UNDERSCORE.append(emoji)
         else:
             WORKSPACE_EMOJIS_UNDERSCORE.append(emoji)
 
@@ -395,6 +401,7 @@ def create_responses(message, userId):
     global WORKSPACE_EMOJIS_UNDERSCORE
     global CUSTOM_EMOJIS
     global CUSTOM_USER_EMOJIS
+    global POKEMON
     responses = []
     # first check for words that are not formatted yet
     unformatted = message.split()
@@ -419,6 +426,9 @@ def create_responses(message, userId):
             for wordGroup in subset:
                 wordGroup = ' '.join(wordGroup)
                 if wordGroup in EMOJIS:
+                    responses.append(wordGroup)
+                if wordGroup in POKEMON:
+                    wordGroup = '_' + wordGroup
                     responses.append(wordGroup)
                 if wordGroup in EMOJIS_UNDERSCORE:
                     wordGroup = wordGroup.replace(' ','_')
