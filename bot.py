@@ -24,9 +24,6 @@ SLACK_CURL_TOKEN = os.environ["SLACK_CURL_TOKEN"]
 USER_ID = os.environ["SLACK_BOT_ID"]
 MIN_EMOJI_LENGTH = 2
 
-FUZZY_MATCH = False
-MIN_FUZZY_CUSTOM_MATCH_RATIO = 60
-
 # the will get loaded in from json files
 CUSTOM_EMOJIS = {}
 CUSTOM_USER_EMOJIS = {}
@@ -446,18 +443,6 @@ def create_responses(message, userId):
                 if userId in CUSTOM_USER_EMOJIS:
                     if wordGroup in CUSTOM_USER_EMOJIS[userId]:
                         responses.append(CUSTOM_USER_EMOJIS[userId][wordGroup])
-
-    if FUZZY_MATCH and len(responses) == 0:
-        for word in words:
-            if(len(word) < 4):
-                break
-
-            result = process.extractOne(word, CUSTOM_EMOJIS.keys())
-            if result[1] > MIN_FUZZY_CUSTOM_MATCH_RATIO:
-                print("FUZZY CUSTOM MATCH: " + result[0])
-                print("FUZZY CUSTOM RATIO: " + str(result[1]))
-                response = CUSTOM_EMOJIS[result[0]]
-                responses.append(response)
 
     # get rid of duplicate responses
     responses = list(set(responses))
