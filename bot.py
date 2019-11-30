@@ -9,7 +9,6 @@ import json
 import itertools
 import string
 
-from fuzzywuzzy import process
 from slack import RTMClient
 
 # constants and globals
