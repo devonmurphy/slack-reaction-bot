@@ -277,27 +277,29 @@ def react_to_post(**payload):
     if(('bot_id' in data)):
         return
 
-    imageText = ""
+    postedImagesText = ""
     if(('files' in data) == True):
         if(len(data['files']) > 0 and OCR ):
-            url = data['files'][0]['url_private']
-            mimetype = data['files'][0]['mimetype']
-            name = "./images/" + data['files'][0]['name']
-            if('image' in mimetype):
-                subprocess.run(["curl", "-X", "GET", "-H", SLACK_CURL_TOKEN, url, "-o", name])
-                imageText = pytesseract.image_to_string(Image.open(name))
-                print("imageText: " + imageText)
+            for postedFile in data['files']:
+                url = postedFile['url_private']
+                mimetype = postedFile['mimetype']
+                name = "./images/" + postedFile['name']
+                if('image' in mimetype):
+                    subprocess.run(["curl", "-X", "GET", "-H", SLACK_CURL_TOKEN, url, "-o", name])
+                    postedImageText = pytesseract.image_to_string(Image.open(name))
+                    print("name: " + name + "\ntext: " + postedImageText)
+                    postedImagesText += '\n' + postedImageText + '\n'
 
 
     if(('text' in data) == False):
-        if(imageText != ""):
-            responses = create_responses(imageText, currentUserId)
+        if(postedImagesText != ""):
+            responses = create_responses(postedImagesText, currentUserId)
             add_reactions(responses, channel, ts, webClient)
             return
         else:
             return
     else:
-        data['text'] += ' ' + imageText
+        data['text'] += '\n' + postedImagesText
 
     users = webClient.users_list()
     for user in users['members']:
