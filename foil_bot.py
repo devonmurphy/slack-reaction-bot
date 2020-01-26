@@ -63,18 +63,19 @@ def react_to_post(**payload):
         return
     if(len(data['attachments']) == 0):
         return
-    if('title' not in data["attachments"][0]):
-        return
 
-    titleSplit = data["attachments"][0]["title"].split("Prices for ")
-    if len(titleSplit) < 2:
-        return
+    for attachment in range(0, len(data['attachments'])):
+        if('title' not in data["attachments"][attachment]):
+            return
+        titleSplit = data["attachments"][attachment]["title"].split("Prices for ")
+        if len(titleSplit) < 2:
+            return
 
-    cardName = titleSplit[1]
-    attachments = data["attachments"]
-    fields = getFoilPrice(cardName)
-    attachments[0]["fields"] = fields
-    attachments[0]["title"] = "Foil prices for " + cardName
+        cardName = titleSplit[1]
+        attachments = data["attachments"]
+        fields = getFoilPrice(cardName)
+        attachments[attachment]["fields"] = fields
+        attachments[attachment]["title"] = "Foil prices for " + cardName
 
     if len(fields) == 0:
         return
