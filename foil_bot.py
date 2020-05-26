@@ -49,6 +49,9 @@ def getFoilPrice(cardName):
 def postMessage(channel, webClient, attachments):
         webClient.chat_postMessage(channel=channel, text="", attachments=attachments)
 
+def postReply(channel, webClient, attachments, threadTs):
+        webClient.chat_postMessage(channel=channel, text="", attachments=attachments, thread_ts=threadTs)
+
 @RTMClient.run_on(event="message")
 def react_to_post(**payload):
     data = payload['data']
@@ -79,7 +82,10 @@ def react_to_post(**payload):
 
     if len(fields) == 0:
         return
-    postMessage(channel, webClient, attachments)
+    if len(attachments) == 1:
+        postMessage(channel, webClient, attachments)
+    else:
+        postReply(channel, webClient, attachments, data['ts'])
 
 
 if __name__ == "__main__":
