@@ -82,7 +82,9 @@ def react_to_post(**payload):
 
     if len(fields) == 0:
         return
-    if len(attachments) == 1:
+    if 'thread_ts' in data:
+        postReply(channel, webClient, attachments, data['thread_ts'])
+    elif len(attachments) == 1:
         postMessage(channel, webClient, attachments)
     else:
         postReply(channel, webClient, attachments, data['ts'])
